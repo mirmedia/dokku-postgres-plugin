@@ -114,7 +114,8 @@ case "$1" in
         # figure out IP to set env var
         ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
         IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
-        dokku config:set "$APP" $ENVVAR_NAME="postgres://${APP}:$(cat $HOST_DIR/db_pw)@$IP:5432/$APP"
+        PW=$(cat $HOST_DIR/db_pw)
+        dokku config:set "$APP" $ENVVAR_NAME="postgres://${APP}:${PW}@$IP:5432/${APP}"
         echo "-----> $APP linked to $CONTAINER_NAME container"
     fi
     ;;
