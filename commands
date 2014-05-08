@@ -50,6 +50,7 @@ case "$1" in
     fi
     VOLUME="$HOST_DIR:/var/lib/postgresql"
     PASS=$(openssl rand -base64 32|base64)
+    echo $PASS >> $HOST_DIR/db_pw
     # Launch container
     docker run -v $VOLUME -name=$CONTAINER_NAME -d \
         -e POSTGRESQL_USER=$APP -e POSTGRESQL_PASS=$PASS \
@@ -60,6 +61,15 @@ case "$1" in
     echo "-----> Postgres container created: $CONTAINER_NAME"
     sleep 1
     dokku postgres:info $APP
+    ;;
+
+  postgres:create_db)
+    VOLUME="$HOST_DIR:/var/lib/postgresql"
+    docker run -v $VOLUME -name=$CONTAINER_NAME -d \
+      -e POSTGRESQL_USER=$APP -e POSTGRESQL_PASS=$(cat $HOST_DIR/db_pw) -e POSTGRESQL_DB=$3 jezdez/postgres
+    ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+    IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
+    dokku config:set "$APP" $ENVVAR_NAME="postgres://${APP}:$(cat $HOST_DIR/db_pw)@$IP:5432/$3"
     ;;
 
   postgres:delete)
